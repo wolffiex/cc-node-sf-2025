@@ -58,16 +58,32 @@ async function* streamCompletion(prompt: string) {
   }
 }
 
-async function* transformStream(generator: AsyncGenerator<string>) {
-  let charCount = 0;
+async function* wrapLines(generator: AsyncGenerator<string>, width = 80) {
+  let buffer = '';
+  
   for await (const chunk of generator) {
-    charCount += chunk.length;
-    yield chunk;
+    buffer += chunk;
     
-    // Example transformation: add periodic status updates
-    if (charCount > 0 && charCount % 100 === 0) {
-      yield `\n[${charCount} chars streamed]\n`;
+    // Output complete lines
+    while (buffer.length >= width) {
+      // Find last space within the line width
+      const spaceIndex = buffer.lastIndexOf(' ', width);
+      
+      if (spaceIndex > 0) {
+        // Break at the space
+        yield buffer.slice(0, spaceIndex) + '\n';
+        buffer = buffer.slice(spaceIndex + 1); // Skip the space
+      } else {
+        // No space found, hard break
+        yield buffer.slice(0, width) + '\n';
+        buffer = buffer.slice(width);
+      }
     }
+  }
+  
+  // Output any remaining text
+  if (buffer) {
+    yield buffer;
   }
 }
 
@@ -75,30 +91,18 @@ async function main() {
   console.log('Enter your prompt:');
   
   // Read from stdin until newline
-  const chunks: Uint8Array[] = [];
-  for await (const chunk of Bun.stdin.stream()) {
-    chunks.push(chunk);
-    const text = new TextDecoder().decode(Buffer.concat(chunks));
-    if (text.includes('\n')) {
-      // Truncate at the first newline
-      const endIndex = text.indexOf('\n');
-      chunks.length = 0; // Clear the array
-      chunks.push(Buffer.from(text.slice(0, endIndex)));
-      break;
-    }
-  }
+  const prompt = await Bun.stdin.text();
+  const trimmedPrompt = prompt.split('\n')[0].trim();
   
-  const prompt = new TextDecoder().decode(Buffer.concat(chunks)).trim();
-  if (!prompt) {
+  if (!trimmedPrompt) {
     console.error('No prompt provided');
     process.exit(1);
   }
-
   console.log('\n--- Streaming response ---\n');
 
   try {
-    // for await (const chunk of transformStream(streamCompletion(prompt))) {
-    for await (const chunk of streamCompletion(prompt)) {
+    for await (const chunk of wrapLines(streamCompletion(prompt))) {
+    // for await (const chunk of streamCompletion(prompt)) {
       process.stdout.write(chunk);
     }
 
