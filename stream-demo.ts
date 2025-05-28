@@ -1,10 +1,6 @@
 #!/usr/bin/env bun
 
 const API_KEY = process.env.ANTHROPIC_API_KEY;
-if (!API_KEY) {
-  console.error('Error: ANTHROPIC_API_KEY environment variable is required');
-  process.exit(1);
-}
 
 async function* streamCompletion(prompt: string) {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -15,7 +11,7 @@ async function* streamCompletion(prompt: string) {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-3-haiku-20240307',
+      model: 'claude-sonnet-4-20250514',
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 1024,
       stream: true,
@@ -76,12 +72,20 @@ async function* transformStream(generator: AsyncGenerator<string>) {
 }
 
 async function main() {
-  console.log('Enter your prompt (Ctrl+D when done):');
+  console.log('Enter your prompt:');
   
-  // Read from stdin
+  // Read from stdin until newline
   const chunks: Uint8Array[] = [];
   for await (const chunk of Bun.stdin.stream()) {
     chunks.push(chunk);
+    const text = new TextDecoder().decode(Buffer.concat(chunks));
+    if (text.includes('\n')) {
+      // Truncate at the first newline
+      const endIndex = text.indexOf('\n');
+      chunks.length = 0; // Clear the array
+      chunks.push(Buffer.from(text.slice(0, endIndex)));
+      break;
+    }
   }
   
   const prompt = new TextDecoder().decode(Buffer.concat(chunks)).trim();
@@ -93,15 +97,10 @@ async function main() {
   console.log('\n--- Streaming response ---\n');
 
   try {
-    // Basic streaming
+    // for await (const chunk of transformStream(streamCompletion(prompt))) {
     for await (const chunk of streamCompletion(prompt)) {
       process.stdout.write(chunk);
     }
-
-    // Example with transformation
-    // for await (const chunk of transformStream(streamCompletion(prompt))) {
-    //   process.stdout.write(chunk);
-    // }
 
     console.log('\n\n--- End of response ---');
   } catch (error) {

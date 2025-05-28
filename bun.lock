@@ -1,0 +1,20 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "sf_node",
+      "devDependencies": {
+        "@types/bun": "^1.2.11",
+      },
+    },
+  },
+  "packages": {
+    "@types/bun": ["@types/bun@1.2.11", "https://artifactory.infra.ant.dev:443/artifactory/api/npm/npm-all/@types/bun/-/bun-1.2.11.tgz", { "dependencies": { "bun-types": "1.2.11" } }, "sha512-ZLbbI91EmmGwlWTRWuV6J19IUiUC5YQ3TCEuSHI3usIP75kuoA8/0PVF+LTrbEnVc8JIhpElWOxv1ocI1fJBbw=="],
+
+    "@types/node": ["@types/node@22.15.3", "https://artifactory.infra.ant.dev:443/artifactory/api/npm/npm-all/@types/node/-/node-22.15.3.tgz", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-lX7HFZeHf4QG/J7tBZqrCAXwz9J5RD56Y6MpP0eJkka8p+K0RY/yBTW7CYFJ4VGCclxqOLKmiGP5juQc6MKgcw=="],
+
+    "bun-types": ["bun-types@1.2.11", "https://artifactory.infra.ant.dev:443/artifactory/api/npm/npm-all/bun-types/-/bun-types-1.2.11.tgz", { "dependencies": { "@types/node": "*" } }, "sha512-dbkp5Lo8HDrXkLrONm6bk+yiiYQSntvFUzQp0v3pzTAsXk6FtgVMjdQ+lzFNVAmQFUkPQZ3WMZqH5tTo+Dp/IA=="],
+
+    "undici-types": ["undici-types@6.21.0", "https://artifactory.infra.ant.dev:443/artifactory/api/npm/npm-all/undici-types/-/undici-types-6.21.0.tgz", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
+  }
+}
