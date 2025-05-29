@@ -172,48 +172,60 @@ For Claude Code users:
 
 JavaScript's packaging story, while not perfect, is significantly simpler for end users. Bun takes this even further with all-in-one simplicity.
 
-## 3. SQLite Challenges in Client-Side Applications
+## SQLite: The Promise vs Reality
 
-### Initial Appeal
-- **Zero configuration**: No server setup required
-- **Single file storage**: Easy backup and portability
-- **ACID compliance**: Reliable transactions
-- **Good performance**: For single-user scenarios
+### The Promise
+- **Modern ORM tooling**: Drizzle for type-safe schema management
+- **Powerful migrations**: Keep code and database in perfect sync
+- **Multi-process safe**: SQLite handles concurrent access
+- **Zero configuration**: Just works out of the box
 
-### Challenges Encountered
+### The Reality: Client-Side Complexity
 
-#### 1. Concurrent Access Issues
-- Multiple CLI instances can cause database locks
-- Write operations block readers in default mode
-- WAL mode helps but isn't perfect for all scenarios
+#### 1. Migration Hell
+- **Limited visibility**: Can't debug when migrations fail on user machines
+- **No rollback**: Once deployed, you're stuck with schema changes
+- **Version skew**: Users on different versions = different schemas
+- **Crash on inconsistency**: Migration failures brick the app
 
-#### 2. File System Dependencies
-- Network file systems (NFS, SMB) cause corruption
-- Cloud sync services (Dropbox, iCloud) create conflicts
-- Different OS file locking behaviors
+#### 2. SQLite's Quirks
+- **No fine-grained locking**: Table-level locks only, readers block writers
+- **Can't alter constraints**: Must recreate entire tables
+- **Serialization footguns**: Defaults don't round-trip through JSON
+- **Type system**: Everything is text, dates are strings
 
-#### 3. Migration Complexity
-- Schema changes require careful orchestration
-- No built-in migration tools like in server databases
-- Backward compatibility harder to maintain
+#### 3. Concurrent Access Reality
+```
+User opens two terminals → two CLI instances → database locked
+User's Dropbox syncs → corrupted database
+User on NFS mount → random failures
+```
 
-#### 4. Performance Limitations
-- Large datasets slow down without proper indexing
-- Full-text search less sophisticated than dedicated engines
-- Query optimization tools are limited
+### The Better Path: Runtime Validation
+
+**Zod + JSON files**:
+- Schema validation at runtime
+- Easy versioning and migration
+- Human-readable/debuggable
+- No lock contention
+- Graceful degradation
+
+```typescript
+// With SQLite: hope migrations ran correctly
+const user = db.select().from(users).where(...)
+
+// With Zod: validate at runtime
+const user = UserSchema.parse(JSON.parse(data))
+```
 
 ### Lessons Learned
-1. **Design for single-writer**: Enforce single CLI instance or use file locks
-2. **Use WAL mode**: Better concurrency but monitor checkpoint behavior
-3. **Regular backups**: Implement automatic backup strategies
-4. **Consider alternatives**: For heavy concurrent use, consider client-server DB
-5. **Abstract data layer**: Make it easy to swap storage backends
 
-### Alternative Approaches Considered
-- **JSON files**: Simpler but lack ACID properties
-- **LevelDB**: Better for key-value patterns
-- **Client-server DB**: PostgreSQL/MySQL for true multi-user support
-- **Hybrid approach**: SQLite for cache, server for shared state
+1. **Client-side != Server-side**: What works for servers fails on user machines
+2. **Visibility matters**: Can't SSH into user's machine to fix migrations
+3. **Simplicity wins**: JSON + validation > complex database
+4. **Fail gracefully**: Better to lose features than crash entirely
+
+For Claude Code, moving away from SQLite would improve reliability and debuggability while maintaining most benefits through runtime validation.
 
 ## Conclusion
 Building Claude Code has provided valuable insights into modern CLI development. The choice of async generators for streaming, JavaScript/TypeScript for implementation, and SQLite for storage each brought unique benefits and challenges that shaped the final product.
