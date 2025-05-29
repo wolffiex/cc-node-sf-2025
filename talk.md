@@ -1,80 +1,75 @@
 # Plain Text, Rich Experience: Lessons from Building Claude Code
 
 ## Overview
-This presentation demonstrates key insights from building Claude Code, Anthropic's official CLI for Claude. These points illustrate technical decisions, challenges, and solutions encountered during development.
-- Demo
+
+- Introducing Claude Code
 - JavaScript Async Generators
 - Python vs JavaScript for a CLI
 - Client-side storage lessons learned
 
-## 1. Async Generators: Natural Fit for Streaming LLM Responses
+## Claude Code
 
-### Why Async Generators Work Well
-- **Natural streaming pattern**: LLM APIs stream tokens incrementally, and async generators provide a perfect abstraction for this pattern
+- Demo
+- [Unix Philosophy](https://cscie2x.dce.harvard.edu/hw/ch01s06.html)
+- TypeScript, Anthropic API, Tool Calling
+- Thinnest possible wrapper over the model
+
+## 1. Async Generators: Streaming LLM Responses
+
+- **Latency**: LLMs are slow, so buffering complete responses results in sub-par UX
+- **Natural streaming pattern**: [LLM APIs stream tokens](https://docs.anthropic.com/en/docs/build-with-claude/streaming#content-block-delta-types) incrementally, and async generators provide a perfect abstraction for this pattern
 - **Memory efficiency**: Process tokens as they arrive without buffering entire responses
 - **Composability**: Easy to transform, filter, or enhance streams with generator functions
-- **Error handling**: Clean propagation of errors through the streaming pipeline
 
-### Example Pattern
-```javascript
-async function* streamLLMResponse(prompt) {
-  const response = await fetch('/api/chat', {
-    method: 'POST',
-    body: JSON.stringify({ prompt }),
-    headers: { 'Content-Type': 'application/json' }
-  });
-  
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    
-    const chunk = decoder.decode(value);
-    yield chunk;
-  }
-}
+## Benefits to Claude Code
 
-// Usage with real-time rendering
-for await (const chunk of streamLLMResponse(userPrompt)) {
-  process.stdout.write(chunk);
-}
-```
-
-### Benefits Realized in Claude Code
 - Immediate user feedback as responses stream
-- Ability to interrupt/cancel mid-stream
+- Reasonable cancellation semantics without losing everything
 - Easy integration with terminal rendering libraries
-- Natural backpressure handling
+- Natural backpressure
 
 ## 2. JavaScript/TypeScript vs Python for CLI Development
 
-### JavaScript/TypeScript Advantages
-- **Unified ecosystem**: Same language for CLI and potential web integrations
-- **Rich npm ecosystem**: Extensive libraries for terminal UI, parsing, etc.
-- **Modern async patterns**: Promises and async/await are first-class citizens
-- **Type safety with TypeScript**: Catch errors at compile time
-- **Fast startup**: V8 optimization and module caching
+Write a program that will:
+1. Stream data asynchronously (simulating API calls)
+2. Split strings into characters
+3. Transform to uppercase
+4. Add typing delay
+5. Output to console
 
-### Python Advantages
-- **Standard library richness**: More built-in utilities for system operations
-- **System integration**: Better OS-level integration and scripting capabilities
-- **Data science libraries**: If CLI needs ML/data processing, Python ecosystem is superior
-- **Simpler distribution**: Python's packaging can be more straightforward for CLI tools
+## 1. JS advantages
 
-### Key Differences Encountered
-1. **Package management**: npm vs pip/poetry - different dependency resolution strategies
-2. **Process handling**: Node's child_process vs Python's subprocess
-3. **File system operations**: Callback-based vs synchronous APIs
-4. **Terminal control**: Different libraries (e.g., blessed/ink vs curses/rich)
-5. **Distribution**: Node requires bundling; Python can use zipapp or PyInstaller
+1. Generator composition
+2. `yield*`
+3. Cleanup
+4. Top-level execution
+4. Error propagation
 
-### Claude Code Decision Factors
-- Chose JS/TS for consistency with Anthropic's web stack
-- Leveraged existing TypeScript expertise on the team
-- Benefited from npm's rich CLI tooling ecosystem
-- Async-first design aligned well with Node.js architecture
+
+## Why This Matters
+
+The JavaScript version is:
+- **Shorter**: ~40 lines vs ~55 lines
+- **Safer**: No resource leaks possible
+- **Clearer**: The pipeline composition is obvious
+- **More maintainable**: Adding/removing stages is trivial
+
+The Python version requires:
+- **Manual resource tracking**: Must remember every generator
+- **Explicit cleanup**: Easy to forget and leak resources
+- **More boilerplate**: Event loop, cleanup blocks
+- **Careful composition**: Can't use natural delegation patterns
+
+Python's async generators are a retrofit, JavaScript has always been evented
+
+## Packaging
+- TODO
+
+### POSIX Integration
+- TODO
+
+### Start-up time
+- TODO
 
 ## 3. SQLite Challenges in Client-Side Applications
 
