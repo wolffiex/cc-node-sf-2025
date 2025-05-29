@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 // Simulated async data source
 async function* streamData() {
@@ -6,7 +6,8 @@ async function* streamData() {
   for (const msg of messages) {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 100));
-    yield msg;
+    yield msg
+    yield " "
   }
 }
 

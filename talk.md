@@ -14,7 +14,7 @@
 - TypeScript, Anthropic API, Tool Calling
 - Thinnest possible wrapper over the model
 
-## 1. Async Generators: Streaming LLM Responses
+## Async Generators: Streaming LLM Responses
 
 - **Latency**: LLMs are slow, so buffering complete responses results in sub-par UX
 - **Natural streaming pattern**: [LLM APIs stream tokens](https://docs.anthropic.com/en/docs/build-with-claude/streaming#content-block-delta-types) incrementally, and async generators provide a perfect abstraction for this pattern
@@ -28,7 +28,7 @@
 - Easy integration with terminal rendering libraries
 - Natural backpressure
 
-## 2. JavaScript/TypeScript vs Python for CLI Development
+## JavaScript/TypeScript vs Python for CLI Development
 
 Write a program that will:
 1. Stream data asynchronously (simulating API calls)
@@ -37,7 +37,7 @@ Write a program that will:
 4. Add typing delay
 5. Output to console
 
-## 1. JS advantages
+## JS advantages
 
 1. Generator composition
 2. `yield*`
@@ -62,13 +62,56 @@ The Python version requires:
 
 Python's async generators are a retrofit, JavaScript has always been evented
 
-## Packaging
-- TODO
+## POSIX Integration: Shell Management
 
-### POSIX Integration
-- TODO
+Write a program that will:
+1. Create an interactive shell session that preserves user aliases
+2. Run commands and capture output in real-time
+3. Handle signals properly (Ctrl+C)
+4. Use named pipes for IPC
+
+## Python advantages
+
+1. **Native PTY support**
+   - `pty.openpty()` creates pseudo-terminals
+   - Enables truly interactive shells with aliases
+   - No external dependencies
+
+2. **Direct FIFO creation**
+   - `os.mkfifo()` just works
+   - Non-blocking I/O with `select()`
+   - No event loop blocking
+
+3. **Process group control**
+   - `os.setsid()` creates new sessions
+   - `os.killpg()` for proper signal propagation
+   - Real signal masks and handling
+
+4. **Synchronous I/O when needed**
+   - Can block without freezing everything
+   - Natural for system operations
+   - `select()` for multiplexing
+
+## Why This Matters
+
+The Python version:
+- **Just works**: PTY, FIFO, signals all native
+- **Proper shell**: Interactive mode with aliases
+- **Clean IPC**: Named pipes without blocking issues
+- **Real process control**: Groups, sessions, signals
+
+The Node.js version:
+- **Requires node-pty**: Native bindings that break
+- **No native FIFOs**: Must shell out to mkfifo
+- **Blocks event loop**: FIFO reads freeze everything
+- **Limited signals**: Can't manage process groups
+
+Node's event-driven architecture fights POSIX's blocking I/O model
 
 ### Start-up time
+- TODO
+
+## Packaging
 - TODO
 
 ## 3. SQLite Challenges in Client-Side Applications

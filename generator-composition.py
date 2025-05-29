@@ -1,30 +1,31 @@
 #!/usr/bin/env python3
 
 import asyncio
-from typing import AsyncIterator
+from typing import AsyncIterator, AsyncGenerator
 
 # Simulated async data source
-async def stream_data() -> AsyncIterator[str]:
+async def stream_data() -> AsyncGenerator[str, None]:
     messages = ['hello', 'world', 'from', 'async', 'generators']
     for msg in messages:
         # Simulate network delay
         await asyncio.sleep(0.1)
         yield msg
+        yield " "
 
 # Split strings into individual characters
-async def chars(strings: AsyncIterator[str]) -> AsyncIterator[str]:
+async def chars(strings: AsyncIterator[str]) -> AsyncGenerator[str, None]:
     async for s in strings:
         # Can't use yield from with async generators!
         for c in s:
             yield c
 
 # Transform characters to uppercase
-async def upper(chars: AsyncIterator[str]) -> AsyncIterator[str]:
+async def upper(chars: AsyncIterator[str]) -> AsyncGenerator[str, None]:
     async for c in chars:
         yield c.upper()
 
 # Add delays between characters for effect
-async def slow_type(chars: AsyncIterator[str], seconds: float = 0.05) -> AsyncIterator[str]:
+async def slow_type(chars: AsyncIterator[str], seconds: float = 0.05) -> AsyncGenerator[str, None]:
     async for c in chars:
         yield c
         await asyncio.sleep(seconds)
