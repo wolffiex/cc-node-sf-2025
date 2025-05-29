@@ -7,39 +7,8 @@ import subprocess
 import signal
 import sys
 import termios
-import tty
+import time
 from pathlib import Path
-
-def create_interactive_shell():
-    """Create a proper interactive shell with PTY that supports aliases"""
-    
-    # Create a pseudo-terminal
-    master_fd, slave_fd = pty.openpty()
-    
-    # Launch bash in interactive mode with proper environment
-    proc = subprocess.Popen(
-        ['bash', '-i'],  # -i for interactive (enables aliases!)
-        stdin=slave_fd,
-        stdout=slave_fd,
-        stderr=slave_fd,
-        preexec_fn=os.setsid,  # Create new session for proper signal handling
-        env={**os.environ, 'PS1': '$ '}  # Simple prompt
-    )
-    
-    # Close slave FD in parent
-    os.close(slave_fd)
-    
-    return proc, master_fd
-
-def setup_signal_handling(proc):
-    """Proper signal forwarding to child process group"""
-    def signal_handler(signum, frame):
-        # Forward signal to entire process group
-        if proc.poll() is None:
-            os.killpg(os.getpgid(proc.pid), signum)
-    
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
 
 def demo_fifo_communication():
     """Demonstrate named pipe creation and usage"""
@@ -68,27 +37,51 @@ def demo_fifo_communication():
     # Cleanup
     fifo_path.unlink()
 
+def create_interactive_shell():
+    """Create a proper interactive shell with PTY that supports aliases"""
+    
+    # Create a pseudo-terminal
+    # parent_fd: used by parent process to read/write to the terminal
+    # child_fd: connected to stdin/stdout/stderr of the child process
+    parent_fd, child_fd = pty.openpty()
+    
+    # Launch bash in interactive mode with proper environment
+    proc = subprocess.Popen(
+        ['bash', '-i'],  # -i for interactive (enables aliases!)
+        stdin=child_fd,
+        stdout=child_fd,
+        stderr=child_fd,
+        preexec_fn=os.setsid,  # setsid = "set session ID" - creates new session/process group
+        env={**os.environ, 'PS1': '$ '}  # Simple prompt
+    )
+    
+    # Close child FD in parent
+    os.close(child_fd)
+    
+    return proc, parent_fd
+
 def main():
     print("Python Shell Integration Demo")
     print("=" * 40)
-    
+
     # 1. Demo FIFO communication
     print("\n1. Testing FIFO communication:")
     demo_fifo_communication()
+
     
     # 2. Create interactive shell with PTY
     print("\n2. Creating interactive shell with alias support:")
-    proc, master_fd = create_interactive_shell()
-    setup_signal_handling(proc)
+    proc, parent_fd = create_interactive_shell()
     
     # 3. Set up terminal for raw mode
     old_tty = termios.tcgetattr(sys.stdin)
     try:
         # Send a command to create an alias
-        os.write(master_fd, b"alias hello='echo Hello from alias!'\n")
-        os.write(master_fd, b"hello\n")  # This will work!
-        os.write(master_fd, b"echo 'Direct command'\n")
-        os.write(master_fd, b"exit\n")
+        os.write(parent_fd, b"alias hello='echo Hello from alias!'\n")
+        os.write(parent_fd, b"hello\n")  # This will work!
+        os.write(parent_fd, b"sleep 2\n")
+        os.write(parent_fd, b"echo 'Direct command'\n")
+        os.write(parent_fd, b"exit\n")
         
         # Read output with proper select() handling
         print("\nShell output:")
@@ -96,10 +89,10 @@ def main():
         
         while proc.poll() is None:
             # Use select for non-blocking I/O
-            r, _, _ = select.select([master_fd], [], [], 0.1)
+            r, _, _ = select.select([parent_fd], [], [], 0.1)
             if r:
                 try:
-                    output = os.read(master_fd, 1024)
+                    output = os.read(parent_fd, 1024)
                     print(output.decode('utf-8', errors='replace'), end='')
                 except OSError:
                     break
@@ -107,7 +100,7 @@ def main():
     finally:
         # Restore terminal
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_tty)
-        os.close(master_fd)
+        os.close(parent_fd)
         
         # Ensure process is terminated
         if proc.poll() is None:

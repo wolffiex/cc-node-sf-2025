@@ -13,8 +13,8 @@ async function* streamData() {
 
 // Split strings into individual characters
 async function* chars(strings) {
-  for await (const s of strings) {
-    yield* s;  // yield* works perfectly with async!
+  for await (const word of strings) {
+    yield* word;  // yield* works perfectly with async!
   }
 }
 

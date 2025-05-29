@@ -3,22 +3,22 @@
 ## Overview
 
 - Introducing Claude Code
-- JavaScript Async Generators
-- Python vs JavaScript for a CLI
+- Async Generators for LLM Agents
+- Python vs JavaScript for a CLI Agent
 - Client-side storage lessons learned
 
 ## Claude Code
 
 - Demo
 - [Unix Philosophy](https://cscie2x.dce.harvard.edu/hw/ch01s06.html)
-- TypeScript, Anthropic API, Tool Calling
+- [Bun](https://bun.sh/docs/bundler/executables), [Anthropic API](https://github.com/anthropics/anthropic-sdk-typescript), [Tool Calling](https://docs.anthropic.com/en/api/messages#body-tools)
 - Thinnest possible wrapper over the model
 
-## Async Generators: Streaming LLM Responses
+## Agents *Are* Async Generators
 
 - **Latency**: LLMs are slow, so buffering complete responses results in sub-par UX
 - **Natural streaming pattern**: [LLM APIs stream tokens](https://docs.anthropic.com/en/docs/build-with-claude/streaming#content-block-delta-types) incrementally, and async generators provide a perfect abstraction for this pattern
-- **Memory efficiency**: Process tokens as they arrive without buffering entire responses
+- **Natural agent framing**: Stream tokens → content blocks → tool calls, each layer composable
 - **Composability**: Easy to transform, filter, or enhance streams with generator functions
 
 ## Benefits to Claude Code
@@ -43,7 +43,7 @@ Write a program that will:
 2. `yield*`
 3. Cleanup
 4. Top-level execution
-4. Error propagation
+5. Error propagation
 
 ## Why This Matters
 
@@ -71,7 +71,7 @@ Write a program that will:
 
 ## Python advantages
 
-1. Native PTY support
+1. [Native PTY support](https://docs.python.org/3/library/pty.html)
 2. Direct FIFO creation
 3. Process group control
 4. Synchronous I/O when needed
@@ -100,7 +100,7 @@ Write a program that will:
 3. Print a message
 4. Exit
 
-Run each 10 times and visualize the results
+Run each multiple times and visualize the results
 
 ## JS advantages
 
@@ -111,19 +111,22 @@ Run each 10 times and visualize the results
 
 ## Why This Matters
 
-Measured startup times (with common imports):
-- **Python**: 57-73ms ███████████
-- **Node.js**: 29-33ms █████
-- **Bun**: 20-24ms ████
-- **Bun compiled**: 13-18ms ██
+### Measured startup times (with common imports):
+
+```
+Python:         47ms ████████████████
+Node.js:        28ms █████████
+Bun:             8ms ███
+Bun compiled:    3ms █
+```
 
 Key insights:
-- **3-4x difference**: Python vs Bun compiled
+- **15x difference**: Python (47ms) vs Bun compiled (3ms)
+- **Bun's breakthrough**: 8ms uncomplied, 3ms compiled - near-native performance
+- **Node.js respectable**: 28ms is still 40% faster than Python
 - **Import overhead**: Python gets slower with each import
-- **Browser heritage**: V8 optimized for fast page loads pays off
-- **Bun's breakthrough**: Near-native performance in a JS runtime
 
-For a CLI tool like Claude Code that runs frequently, 70ms vs 15ms is the difference between feeling sluggish and feeling instant
+For a CLI tool like Claude Code that runs frequently, 47ms vs 3ms is the difference between feeling sluggish and feeling instant
 
 ## Packaging & Distribution
 
@@ -148,7 +151,7 @@ Create a CLI tool that:
 3. **Version compatibility**
    - Node/npm versions are largely compatible
    - Python 2/3 split was devastating
-   - Python 3.8 vs 3.11 can break things
+   - Python 3.8 vs 3.11: typing syntax, match statements, walrus operators
    - JS maintains better backwards compatibility
 
 4. **Superior package manager**
@@ -182,19 +185,26 @@ JavaScript's packaging story, while not perfect, is significantly simpler for en
 
 ### The Reality: Client-Side Complexity
 
-#### 1. Migration Hell
+#### 1. Native Dependency Hell ([#978](https://github.com/anthropics/claude-code/issues/978))
+- **Prebuilt binaries missing**: Not available for all platforms/architectures
+- **node-gyp fallback nightmare**: Requires Python, build tools, hours of debugging
+- **Package manager incompatibility**: pnpm, yarn handle native deps differently
+- **Auto-update breaks bindings**: Native modules deleted, requiring manual rebuild
+- **"Database unavailable"**: Complete feature loss until fixed
+
+#### 2. Migration Hell
 - **Limited visibility**: Can't debug when migrations fail on user machines
 - **No rollback**: Once deployed, you're stuck with schema changes
 - **Version skew**: Users on different versions = different schemas
 - **Crash on inconsistency**: Migration failures brick the app
 
-#### 2. SQLite's Quirks
+#### 3. SQLite's Quirks
 - **No fine-grained locking**: Table-level locks only, readers block writers
 - **Can't alter constraints**: Must recreate entire tables
 - **Serialization footguns**: Defaults don't round-trip through JSON
 - **Type system**: Everything is text, dates are strings
 
-#### 3. Concurrent Access Reality
+#### 4. Concurrent Access Reality
 ```
 User opens two terminals → two CLI instances → database locked
 User's Dropbox syncs → corrupted database

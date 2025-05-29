@@ -1,13 +1,13 @@
 #!/usr/bin/env bun
 
-const API_KEY = process.env.ANTHROPIC_API_KEY;
+const API_KEY = process.env.ANTHROPIC_API_KEY
 
 async function* streamCompletion(prompt: string) {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-API-Key': API_KEY,
+      'X-API-Key': API_KEY || '',
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
@@ -101,8 +101,8 @@ async function main() {
   console.log('\n--- Streaming response ---\n');
 
   try {
-    // for await (const chunk of wrapLines(streamCompletion(prompt))) {
-    for await (const chunk of streamCompletion(prompt)) {
+    for await (const chunk of wrapLines(streamCompletion(prompt))) {
+    // for await (const chunk of streamCompletion(prompt)) {
       process.stdout.write(chunk);
     }
 
