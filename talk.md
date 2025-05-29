@@ -72,25 +72,10 @@ Write a program that will:
 
 ## Python advantages
 
-1. **Native PTY support**
-   - `pty.openpty()` creates pseudo-terminals
-   - Enables truly interactive shells with aliases
-   - No external dependencies
-
-2. **Direct FIFO creation**
-   - `os.mkfifo()` just works
-   - Non-blocking I/O with `select()`
-   - No event loop blocking
-
-3. **Process group control**
-   - `os.setsid()` creates new sessions
-   - `os.killpg()` for proper signal propagation
-   - Real signal masks and handling
-
-4. **Synchronous I/O when needed**
-   - Can block without freezing everything
-   - Natural for system operations
-   - `select()` for multiplexing
+1. Native PTY support
+2. Direct FIFO creation
+3. Process group control
+4. Synchronous I/O when needed
 
 ## Why This Matters
 
@@ -108,8 +93,33 @@ The Node.js version:
 
 Node's event-driven architecture fights POSIX's blocking I/O model
 
-### Start-up time
-- TODO
+## Start-up Time
+
+Write a program that will:
+1. Print "Hello, World!"
+2. Parse command line arguments
+3. Exit
+
+## JS advantages
+
+1. Browser optimization legacy
+2. Bun's breakthrough performance
+3. Module caching
+4. Smaller runtime
+
+## Why This Matters
+
+JavaScript startup times:
+- **Node.js**: ~30-50ms for simple script
+- **Bun**: ~10-15ms (!)
+- **Instant feel**: Sub-perceptual delays
+
+Python startup times:
+- **Python**: ~100-150ms for simple script
+- **Import tax**: Each import adds time
+- **No JIT**: Must parse everything upfront
+
+For a CLI tool like Claude Code that runs frequently, 100ms vs 15ms is the difference between feeling instant and feeling sluggish
 
 ## Packaging
 - TODO
