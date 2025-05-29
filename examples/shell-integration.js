@@ -2,12 +2,16 @@
 
 const { spawn, execSync } = require('child_process');
 const fs = require('fs');
-const path = require('path');
 
 // Attempt 1: Basic spawn (aliases won't work)
 function basicShellAttempt() {
     console.log("\n1. Basic spawn attempt (aliases won't work):");
     
+    // Can't use -i (interactive) flag because:
+    // - It would block waiting for input with no PTY
+    // - Node's spawn doesn't allocate a pseudo-terminal
+    // - Would block the event loop indefinitely
+    // Must use -c to run command and exit immediately
     const shell = spawn('bash', ['-c', 'alias hello="echo Hello from alias"; hello']);
     
     shell.stdout.on('data', (data) => {
@@ -30,6 +34,13 @@ async function fifoAttempt() {
     
     const fifoPath = '/tmp/node_shell_fifo';
     
+    // Clean up any existing FIFO first
+    try {
+        fs.unlinkSync(fifoPath);
+    } catch (e) {
+        // Ignore if doesn't exist
+    }
+    
     try {
         // Node can't create FIFOs directly - must shell out
         execSync(`mkfifo ${fifoPath}`);
@@ -37,6 +48,12 @@ async function fifoAttempt() {
         
         // This is where it gets problematic...
         // Reading from FIFO blocks the entire event loop!
+        
+        // Remember: In Python we used fork() to handle this cleanly:
+        // - Parent process could block on FIFO read
+        // - Child process wrote to FIFO
+        // - No event loop to worry about!
+        // In Node, we can't fork() and blocking kills everything
         
         // Spawn a child to write to FIFO
         const writer = spawn('bash', ['-c', `echo "Hello from FIFO" > ${fifoPath}`]);
@@ -63,32 +80,29 @@ async function fifoAttempt() {
     }
 }
 
-// Attempt 3: Interactive shell with node-pty (requires external package)
-function ptyAttempt() {
-    console.log("\n3. PTY attempt:");
-    console.log("Would require 'node-pty' package (native bindings)");
-    console.log("Even then:");
-    console.log("- Complex setup");
-    console.log("- Platform-specific issues");
-    console.log("- No native signal handling");
+// Demonstrate signal handling limitations
+function signalHandlingDemo() {
+    console.log("\n3. Signal handling limitations:");
     
-    // Demonstrate signal handling limitations
-    console.log("\n4. Signal handling limitations:");
+    // Spawn a shell that runs multiple processes
+    const child = spawn('bash', ['-c', 'echo "Parent bash PID: $$"; sleep 5 & echo "Background sleep PID: $!"; wait']);
     
-    const child = spawn('bash', ['-c', 'sleep 30']);
-    
-    // Basic signal handling only
-    process.on('SIGINT', () => {
-        console.log("Received SIGINT");
-        child.kill('SIGTERM');  // Can't kill process group!
+    child.stdout.on('data', (data) => {
+        console.log(`Child output: ${data.toString().trim()}`);
     });
     
-    console.log("Can't properly:");
-    console.log("- Create process groups");
-    console.log("- Forward signals to process groups");
-    console.log("- Handle signal masks");
+    // Try to kill after 1 second
+    setTimeout(() => {
+        console.log("Killing child process...");
+        child.kill('SIGTERM');
+        // Problem: This only kills bash, not the background sleep!
+        console.log("Killed bash, but background processes may still be running!");
+    }, 1000);
     
-    child.kill('SIGTERM');
+    console.log("Node can't:");
+    console.log("- Create new sessions (no setsid)");
+    console.log("- Kill entire process groups");
+    console.log("- Properly manage child process trees");
 }
 
 // Main demo
@@ -103,7 +117,7 @@ async function main() {
         await fifoAttempt();
         
         setTimeout(() => {
-            ptyAttempt();
+            signalHandlingDemo();
             
             console.log("\n" + "=".repeat(40));
             console.log("Summary of Node.js limitations:");

@@ -4,10 +4,7 @@ import os
 import pty
 import select
 import subprocess
-import signal
 import sys
-import termios
-import time
 from pathlib import Path
 
 def demo_fifo_communication():
@@ -73,8 +70,6 @@ def main():
     print("\n2. Creating interactive shell with alias support:")
     proc, parent_fd = create_interactive_shell()
     
-    # 3. Set up terminal for raw mode
-    old_tty = termios.tcgetattr(sys.stdin)
     try:
         # Send a command to create an alias
         os.write(parent_fd, b"alias hello='echo Hello from alias!'\n")
@@ -91,15 +86,10 @@ def main():
             # Use select for non-blocking I/O
             r, _, _ = select.select([parent_fd], [], [], 0.1)
             if r:
-                try:
-                    output = os.read(parent_fd, 1024)
-                    print(output.decode('utf-8', errors='replace'), end='')
-                except OSError:
-                    break
+                output = os.read(parent_fd, 1024)
+                print(output.decode('utf-8', errors='replace'), end='')
     
     finally:
-        # Restore terminal
-        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_tty)
         os.close(parent_fd)
         
         # Ensure process is terminated

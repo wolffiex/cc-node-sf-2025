@@ -85,7 +85,7 @@ The Python version:
 - **Real process control**: Groups, sessions, signals
 
 The Node.js version:
-- **Requires node-pty**: Native bindings that break
+- **Requires [node-pty](https://github.com/microsoft/node-pty)**: Native bindings that break
 - **No native FIFOs**: Must shell out to mkfifo
 - **Blocks event loop**: FIFO reads freeze everything
 - **Limited signals**: Can't manage process groups
