@@ -96,9 +96,12 @@ Node's event-driven architecture fights POSIX's blocking I/O model
 ## Start-up Time
 
 Write a program that will:
-1. Print "Hello, World!"
+1. Import common modules (fs, path, subprocess, etc.)
 2. Parse command line arguments
-3. Exit
+3. Print a message
+4. Exit
+
+Run each 10 times and visualize the results
 
 ## JS advantages
 
@@ -109,17 +112,19 @@ Write a program that will:
 
 ## Why This Matters
 
-JavaScript startup times:
-- **Node.js**: ~30-50ms for simple script
-- **Bun**: ~10-15ms (!)
-- **Instant feel**: Sub-perceptual delays
+Measured startup times (with common imports):
+- **Python**: 57-73ms ███████████
+- **Node.js**: 29-33ms █████
+- **Bun**: 20-24ms ████
+- **Bun compiled**: 13-18ms ██
 
-Python startup times:
-- **Python**: ~100-150ms for simple script
-- **Import tax**: Each import adds time
-- **No JIT**: Must parse everything upfront
+Key insights:
+- **3-4x difference**: Python vs Bun compiled
+- **Import overhead**: Python gets slower with each import
+- **Browser heritage**: V8 optimized for fast page loads pays off
+- **Bun's breakthrough**: Near-native performance in a JS runtime
 
-For a CLI tool like Claude Code that runs frequently, 100ms vs 15ms is the difference between feeling instant and feeling sluggish
+For a CLI tool like Claude Code that runs frequently, 70ms vs 15ms is the difference between feeling sluggish and feeling instant
 
 ## Packaging
 - TODO
