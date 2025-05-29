@@ -45,7 +45,6 @@ Write a program that will:
 4. Top-level execution
 4. Error propagation
 
-
 ## Why This Matters
 
 The JavaScript version is:
@@ -126,8 +125,52 @@ Key insights:
 
 For a CLI tool like Claude Code that runs frequently, 70ms vs 15ms is the difference between feeling sluggish and feeling instant
 
-## Packaging
-- TODO
+## Packaging & Distribution
+
+Create a CLI tool that:
+1. Has multiple dependencies
+2. Needs to run on different developer machines
+3. Should be easy to install and update
+
+## JS advantages
+
+1. **Single manifest file**
+   - `package.json` defines everything
+   - Dependencies, scripts, metadata in one place
+   - No separate requirements.txt, setup.py, pyproject.toml confusion
+
+2. **No virtual environment maze**
+   - `npm install` just works
+   - No activate/deactivate dance
+   - No "which Python am I using?" confusion
+   - Dependencies isolated by default
+
+3. **Version compatibility**
+   - Node/npm versions are largely compatible
+   - Python 2/3 split was devastating
+   - Python 3.8 vs 3.11 can break things
+   - JS maintains better backwards compatibility
+
+4. **Superior package manager**
+   - npm/yarn/pnpm are mature and fast
+   - Lockfiles that actually work
+   - Better dependency resolution
+   - npm scripts for task running built-in
+
+5. **Modern alternatives**
+   - Bun: package manager + runtime + bundler
+   - Single binary does everything
+   - Python's uv/uvx promising but playing catch-up
+
+## Why This Matters
+
+For Claude Code users:
+- **"npm install" vs "create venv, activate, pip install, hope it works"**
+- **Single Node version vs "pyenv, conda, system Python" chaos**
+- **package-lock.json ensures reproducible installs**
+- **npx for one-off execution without install**
+
+JavaScript's packaging story, while not perfect, is significantly simpler for end users. Bun takes this even further with all-in-one simplicity.
 
 ## 3. SQLite Challenges in Client-Side Applications
 
