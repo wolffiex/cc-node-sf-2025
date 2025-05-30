@@ -83,12 +83,14 @@ The Python version:
 - **Proper shell**: Interactive mode with aliases
 - **Clean IPC**: Named pipes without blocking issues
 - **Real process control**: Groups, sessions, signals
+- **Fast!**: Native POSIX operations with minimal overhead
 
 The Node.js version:
 - **Requires [node-pty](https://github.com/microsoft/node-pty)**: Native bindings that break
 - **No native FIFOs**: Must shell out to mkfifo
 - **Blocks event loop**: FIFO reads freeze everything
 - **Limited signals**: Can't manage process groups
+- **Slow**: Each operation incurs overhead on the event loop
 
 Node's event-driven architecture fights POSIX's blocking I/O model
 
@@ -152,6 +154,7 @@ Create a CLI tool that:
    - Node/npm versions are largely compatible
    - Python 2/3 split was devastating
    - Python 3.8 vs 3.11: typing syntax, match statements, walrus operators
+   - Python builds vary by host: SSL support, readline, sqlite3 availability
    - JS maintains better backwards compatibility
 
 4. **Superior package manager**
@@ -168,19 +171,19 @@ Create a CLI tool that:
 ## Why This Matters
 
 For Claude Code users:
-- **"npm install" vs "create venv, activate, pip install, hope it works"**
-- **Single Node version vs "pyenv, conda, system Python" chaos**
-- **package-lock.json ensures reproducible installs**
-- **npx for one-off execution without install**
+- "npm install" vs "create venv, activate, pip install, hope it works"
+- Single Node version vs "pyenv, conda, system Python" chaos
+- package-lock.json ensures reproducible installs
+- npx for one-off execution without install
 
 JavaScript's packaging story, while not perfect, is significantly simpler for end users. Bun takes this even further with all-in-one simplicity.
 
 ## SQLite: The Promise vs Reality
 
 ### The Promise
-- **Modern ORM tooling**: Drizzle for type-safe schema management
+- **Modern ORM tooling**: [Drizzle](https://orm.drizzle.team/) for type-safe schema management
 - **Powerful migrations**: Keep code and database in perfect sync
-- **Multi-process safe**: SQLite handles concurrent access
+- **Multi-process safe**: [SQLite](https://www.sqlite.org/) handles concurrent access
 - **Zero configuration**: Just works out of the box
 
 ### The Reality: Client-Side Complexity
@@ -213,7 +216,7 @@ User on NFS mount → random failures
 
 ### The Better Path: Runtime Validation
 
-**Zod + JSON files**:
+**[Zod](https://zod.dev/) + JSONL files**:
 - Schema validation at runtime
 - Easy versioning and migration
 - Human-readable/debuggable
@@ -235,7 +238,7 @@ const user = UserSchema.parse(JSON.parse(data))
 3. **Simplicity wins**: JSON + validation > complex database
 4. **Fail gracefully**: Better to lose features than crash entirely
 
-For Claude Code, moving away from SQLite would improve reliability and debuggability while maintaining most benefits through runtime validation.
+For Claude Code, moving away from SQLite improved reliability and debuggability with the option to maintain most benefits through runtime validation.
 
 ## Conclusion
 Building Claude Code has provided valuable insights into modern CLI development. The choice of async generators for streaming, JavaScript/TypeScript for implementation, and SQLite for storage each brought unique benefits and challenges that shaped the final product.
