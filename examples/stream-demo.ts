@@ -101,8 +101,8 @@ async function main() {
   console.log('\n--- Streaming response ---\n');
 
   try {
-    for await (const chunk of wrapLines(streamCompletion(prompt))) {
-    // for await (const chunk of streamCompletion(prompt)) {
+    // for await (const chunk of wrapLines(streamCompletion(prompt))) {
+    for await (const chunk of streamCompletion(prompt)) {
       process.stdout.write(chunk);
     }
 
