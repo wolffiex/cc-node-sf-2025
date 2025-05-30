@@ -247,3 +247,5 @@ These experiences highlight the importance of:
 - Choosing patterns that align with your problem domain (streaming → generators)
 - Evaluating language ecosystems holistically (not just syntax preferences)
 - Understanding storage trade-offs early in the design process
+
+This repository is available at [https://github.com/wolffiex/cc-node-sf-2025](https://github.com/wolffiex/cc-node-sf-2025)
